@@ -1,12 +1,19 @@
 #pragma once
 
-#pragma region windows 헤더
+
+// windows 헤더
 #include <SDKDDKVer.h>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
-#pragma endregion
-#pragma region C 런타임 헤더
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
-#pragma endregion
+
+// C++ 헤더
+#include <string>
+#include <memory>
+using std::unique_ptr;
+using std::shared_ptr;
+using std::weak_ptr;
+
+// 사용자 헤더
+#include <Uncopyable.h>
+#include <ErrorReporter.h>
