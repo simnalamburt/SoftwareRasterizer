@@ -15,8 +15,13 @@ public:
     ~SystemClass();
 
     void Run(int ShowCommand);
+
+    function<void(double)> IdleFunction;
+
 private:
-    friend LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+    static LRESULT CALLBACK WndProc_temp(HWND, UINT, WPARAM, LPARAM);
+    static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
     LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
+
     void onIdle();
 };

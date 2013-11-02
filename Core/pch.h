@@ -11,4 +11,5 @@
 #include <comdef.h>
 
 // C++ Çì´õ
+#include <string>
 #include <sstream>

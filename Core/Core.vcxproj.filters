@@ -10,6 +10,9 @@
     <Filter Include="[pch]">
       <UniqueIdentifier>{ece722f6-af50-429f-93b2-9fd43e9ddedf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{3bd775d5-da05-4100-8826-ccdcfc26febe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Inc\ErrorReporter.h">
@@ -21,6 +24,9 @@
     <ClInclude Include="pch.h">
       <Filter>[pch]</Filter>
     </ClInclude>
+    <ClInclude Include="Inc\Utility.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ErrorReporter.cpp">
@@ -28,6 +34,9 @@
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>[pch]</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

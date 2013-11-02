@@ -3,18 +3,12 @@
 #include "resource.h"
 using std::wstring;
 
-static LRESULT CALLBACK WndProc_temp(HWND, UINT, WPARAM, LPARAM);
-static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-static wstring LoadString(_In_opt_ HINSTANCE InstanceHandle, _In_ UINT uID);
-static double getTimerFreq();
-static double getTimerCount();
-
 
 
 SystemClass::SystemClass(_In_ HINSTANCE InstanceHandle, _In_ size_t Width, _In_ size_t Height, _In_ bool FullScreen) :
-    instanceHandle ( InstanceHandle ),
-    isFullScreen ( FullScreen ),
-    freq( getTimerFreq() ), last( 0.0 )
+    instanceHandle ( InstanceHandle ), isFullScreen ( FullScreen ),
+    freq( getTimerFreq() ), last( 0.0 ),
+    IdleFunction( [](double elapsed){} )
 {
     #pragma region initialize windowHandle
     // get the application title and name of the class from the Executable.rc
@@ -114,19 +108,39 @@ void SystemClass::Run(int ShowCommand)
 
     while( true )
     {
-        while ( PeekMessage(&message, nullptr, 0, 0, PM_REMOVE) )
+        if ( PeekMessage(&message, nullptr, 0, 0, PM_REMOVE) )
         {
-            if ( message.message == WM_QUIT ) goto onQuit;
+            if ( message.message == WM_QUIT ) break;
             DispatchMessage(&message);
+            continue;
         }
-
         onIdle();
 
         // TODO : 윈도우가 비활성화되었을때의 처리가 여기에 들어가야한다
         // WaitMessage();
     }
-onQuit:
-    return;
+}
+
+// temporary window procedure of new window
+LRESULT CALLBACK SystemClass::WndProc_temp(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    // it change the window's WndProc when it set GWL_USERDATA to address of a SystemClass object
+    if ( Message == WM_NCCREATE )
+    {
+        LPCREATESTRUCT CreateStruct = reinterpret_cast<LPCREATESTRUCT>( lParam );
+        SetWindowLongPtr(WindowHandle, GWL_USERDATA, reinterpret_cast<LONG_PTR>( CreateStruct->lpCreateParams ));
+        SetWindowLongPtr(WindowHandle, GWL_WNDPROC, reinterpret_cast<LONG_PTR>( WndProc ));
+        return WndProc(WindowHandle, Message, wParam, lParam);
+    }
+
+    return DefWindowProc(WindowHandle, Message, wParam, lParam);
+}
+
+// main window procedure
+LRESULT CALLBACK SystemClass::WndProc(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    SystemClass* system = reinterpret_cast<SystemClass*>( GetWindowLongPtr(WindowHandle, GWL_USERDATA) );
+    return system->MessageHandler(WindowHandle, Message, wParam, lParam);
 }
 
 LRESULT CALLBACK SystemClass::MessageHandler(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -155,51 +169,6 @@ void SystemClass::onIdle()
 {
     double now = getTimerCount();
     if ( last == 0.0 ) last = now;
-    // (now-last)/freq
+    IdleFunction((now-last)/freq);
     last = now;
-}
-
-
-
-// temporary window procedure of new window
-static LRESULT CALLBACK WndProc_temp(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    // it change the window's WndProc when it set GWL_USERDATA to address of a SystemClass object
-    if ( Message == WM_NCCREATE )
-    {
-        LPCREATESTRUCT CreateStruct = reinterpret_cast<LPCREATESTRUCT>( lParam );
-        SetWindowLongPtr(WindowHandle, GWL_USERDATA, reinterpret_cast<LONG_PTR>( CreateStruct->lpCreateParams ));
-        SetWindowLongPtr(WindowHandle, GWL_WNDPROC, reinterpret_cast<LONG_PTR>( WndProc ));
-        return WndProc(WindowHandle, Message, wParam, lParam);
-    }
-
-    return DefWindowProc(WindowHandle, Message, wParam, lParam);
-}
-
-// main window procedure
-static LRESULT CALLBACK WndProc(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    SystemClass* system = reinterpret_cast<SystemClass*>( GetWindowLongPtr(WindowHandle, GWL_USERDATA) );
-    return system->MessageHandler(WindowHandle, Message, wParam, lParam);
-}
-
-wstring LoadString(_In_opt_ HINSTANCE InstanceHandle, _In_ UINT uID)
-{
-    const wchar_t* src; int len;
-    FALSE_ERROR( len = LoadString(InstanceHandle, uID, reinterpret_cast<LPWSTR>( &src ), 0) );
-    return wstring(src, len);
-}
-
-static double getTimerFreq()
-{
-    LARGE_INTEGER freq;
-    FALSE_ERROR( QueryPerformanceFrequency(&freq) );
-    return static_cast<double>( freq.QuadPart );
-}
-
-static double getTimerCount()
-{
-    LARGE_INTEGER count;
-    FALSE_ERROR( QueryPerformanceCounter(&count) );
-    return static_cast<double>( count.QuadPart );
 }

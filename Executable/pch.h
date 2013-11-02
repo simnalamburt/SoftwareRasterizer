@@ -5,7 +5,7 @@
 #include <SDKDDKVer.h>
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <windows.h>
+#include <Windows.h>
 
 // C++ 헤더
 #include <string>
@@ -14,6 +14,10 @@ using std::unique_ptr;
 using std::shared_ptr;
 using std::weak_ptr;
 
+#include <functional>
+using std::function;
+
 // 사용자 헤더
-#include <Uncopyable.h>
-#include <ErrorReporter.h>
+#include "ErrorReporter.h"
+#include "Uncopyable.h"
+#include "Utility.h"
