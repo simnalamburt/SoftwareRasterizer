@@ -15,7 +15,8 @@ public:
     ~SystemClass();
 
     void Run(int ShowCommand);
-    LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
 private:
+    friend LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+    LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
     void onIdle();
 };
