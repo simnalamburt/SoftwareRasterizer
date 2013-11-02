@@ -3,11 +3,10 @@
 class SystemClass : Uncopyable
 {
 private:
-    HINSTANCE instanceHandle;
-    bool isFullScreen;
-
+    const HINSTANCE instanceHandle;
     HWND windowHandle;
 
+    const bool isFullScreen;
     const double freq;
     double last;
 

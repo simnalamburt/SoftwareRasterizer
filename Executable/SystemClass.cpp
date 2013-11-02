@@ -6,20 +6,8 @@ using std::wstring;
 static LRESULT CALLBACK WndProc_temp(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static wstring LoadString(_In_opt_ HINSTANCE InstanceHandle, _In_ UINT uID);
-
-static double getTimerFreq()
-{
-    LARGE_INTEGER freq;
-    FALSE_ERROR( QueryPerformanceFrequency(&freq) );
-    return static_cast<double>( freq.QuadPart );
-}
-
-static double getTimerCount()
-{
-    LARGE_INTEGER count;
-    FALSE_ERROR( QueryPerformanceCounter(&count) );
-    return static_cast<double>( count.QuadPart );
-}
+static double getTimerFreq();
+static double getTimerCount();
 
 
 
@@ -200,4 +188,18 @@ wstring LoadString(_In_opt_ HINSTANCE InstanceHandle, _In_ UINT uID)
     const wchar_t* src; int len;
     FALSE_ERROR( len = LoadString(InstanceHandle, uID, reinterpret_cast<LPWSTR>( &src ), 0) );
     return wstring(src, len);
+}
+
+static double getTimerFreq()
+{
+    LARGE_INTEGER freq;
+    FALSE_ERROR( QueryPerformanceFrequency(&freq) );
+    return static_cast<double>( freq.QuadPart );
+}
+
+static double getTimerCount()
+{
+    LARGE_INTEGER count;
+    FALSE_ERROR( QueryPerformanceCounter(&count) );
+    return static_cast<double>( count.QuadPart );
 }
