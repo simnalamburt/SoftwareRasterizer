@@ -16,12 +16,11 @@ public:
 
     void Run(int ShowCommand);
 
-    function<void(double)> IdleFunction;
+    function<void(double)> onIdle;
+    function<void(HDC)> onDraw;
 
 private:
-    static LRESULT CALLBACK WndProc_temp(HWND, UINT, WPARAM, LPARAM);
-    static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-    LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
-
-    void onIdle();
+    static LRESULT CALLBACK wndProc_temp(HWND, UINT, WPARAM, LPARAM);
+    static LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
+    LRESULT CALLBACK messageHandler(HWND, UINT, WPARAM, LPARAM);
 };

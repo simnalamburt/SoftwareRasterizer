@@ -7,8 +7,7 @@ using std::wstring;
 
 SystemClass::SystemClass(_In_ HINSTANCE InstanceHandle, _In_ size_t Width, _In_ size_t Height, _In_ bool FullScreen) :
     instanceHandle ( InstanceHandle ), isFullScreen ( FullScreen ),
-    freq( getTimerFreq() ), last( 0.0 ),
-    IdleFunction( [](double elapsed){} )
+    freq( getTimerFreq() ), last( 0.0 )
 {
     #pragma region initialize windowHandle
     // get the application title and name of the class from the Executable.rc
@@ -28,7 +27,7 @@ SystemClass::SystemClass(_In_ HINSTANCE InstanceHandle, _In_ size_t Width, _In_ 
     // set the basic window information
     WNDCLASSEX wcex = {};
     wcex.style 				= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc		= WndProc_temp;
+    wcex.lpfnWndProc		= wndProc_temp;
     wcex.lpszClassName	= ClassName.c_str();
     wcex.hInstance			= instanceHandle;
     wcex.hIcon = wcex.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
@@ -114,42 +113,55 @@ void SystemClass::Run(int ShowCommand)
             DispatchMessage(&message);
             continue;
         }
-        onIdle();
-
-        // TODO : 윈도우가 비활성화되었을때의 처리가 여기에 들어가야한다
-        // WaitMessage();
+        
+        if ( onIdle )
+        {
+            double now = getTimerCount();
+            if ( last == 0.0 ) last = now;
+            onIdle((now-last)/freq);
+            last = now;
+        }
+        else
+        {
+            WaitMessage();
+        }
     }
 }
 
 // temporary window procedure of new window
-LRESULT CALLBACK SystemClass::WndProc_temp(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SystemClass::wndProc_temp(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     // it change the window's WndProc when it set GWL_USERDATA to address of a SystemClass object
     if ( Message == WM_NCCREATE )
     {
         LPCREATESTRUCT CreateStruct = reinterpret_cast<LPCREATESTRUCT>( lParam );
         SetWindowLongPtr(WindowHandle, GWL_USERDATA, reinterpret_cast<LONG_PTR>( CreateStruct->lpCreateParams ));
-        SetWindowLongPtr(WindowHandle, GWL_WNDPROC, reinterpret_cast<LONG_PTR>( WndProc ));
-        return WndProc(WindowHandle, Message, wParam, lParam);
+        SetWindowLongPtr(WindowHandle, GWL_WNDPROC, reinterpret_cast<LONG_PTR>( wndProc ));
+        return wndProc(WindowHandle, Message, wParam, lParam);
     }
 
     return DefWindowProc(WindowHandle, Message, wParam, lParam);
 }
 
 // main window procedure
-LRESULT CALLBACK SystemClass::WndProc(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SystemClass::wndProc(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     SystemClass* system = reinterpret_cast<SystemClass*>( GetWindowLongPtr(WindowHandle, GWL_USERDATA) );
-    return system->MessageHandler(WindowHandle, Message, wParam, lParam);
+    return system->messageHandler(WindowHandle, Message, wParam, lParam);
 }
 
-LRESULT CALLBACK SystemClass::MessageHandler(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SystemClass::messageHandler(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch ( Message )
     {
     case WM_PAINT:
-        onIdle();
-        ValidateRect(WindowHandle, nullptr);
+        if ( onDraw )
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(windowHandle, &ps);
+            onDraw(hdc);
+            EndPaint(windowHandle, &ps);
+        }
         return 0;
     case WM_KEYDOWN:
         return 0;
@@ -163,12 +175,4 @@ LRESULT CALLBACK SystemClass::MessageHandler(HWND WindowHandle, UINT Message, WP
     default:
         return DefWindowProc(WindowHandle, Message, wParam, lParam);
     }
-}
-
-void SystemClass::onIdle()
-{
-    double now = getTimerCount();
-    if ( last == 0.0 ) last = now;
-    IdleFunction((now-last)/freq);
-    last = now;
 }
