@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "SystemClass.h"
 
-
+using namespace tbb;
 
 inline int ARGB(BYTE A, BYTE R, BYTE G, BYTE B)
 {
@@ -36,13 +36,16 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         size_t width = info.bmiHeader.biWidth;
         size_t height = info.bmiHeader.biHeight;
 
-        for( size_t y=0; y<height; ++y )
+        parallel_for( blocked_range<size_t>(0, height), [=, &screen](const blocked_range<size_t>& r)
         {
-            for( size_t x=0; x<width; ++x )
+            for( size_t y=r.begin(); y<r.end(); ++y )
             {
-                screen[y][x] = 0x47a6ff;
+                for( size_t x=0; x<width; ++x )
+                {
+                    screen[y][x] = GetCurrentThreadId();
+                }
             }
-        }
+        });
 
         SetDIBitsToDevice(hdc, 0, 0, width, height, 0, 0, 0, height, &screen[0][0], &info, DIB_RGB_COLORS);
     };

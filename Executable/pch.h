@@ -17,7 +17,10 @@ using std::weak_ptr;
 #include <functional>
 using std::function;
 
+// Intel TBB
+#include <tbb/parallel_for.h>
+
 // 사용자 헤더
-#include "ErrorReporter.h"
-#include "Uncopyable.h"
-#include "Utility.h"
+#include <ErrorReporter.h>
+#include <Uncopyable.h>
+#include <Utility.h>
