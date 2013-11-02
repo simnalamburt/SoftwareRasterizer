@@ -1,4 +1,6 @@
-SoftwareRasterizer
+Multi-Threaded Software Rasterizer
 ==================
 
-2013년 2학기 프로젝트 1 : 멀티스레드 소프트웨어 래스터라이저
+프로젝트 1
+- 김지현
+- 이효원
