@@ -135,8 +135,8 @@ LRESULT CALLBACK SystemClass::wndProc_temp(HWND WindowHandle, UINT Message, WPAR
     if ( Message == WM_NCCREATE )
     {
         LPCREATESTRUCT CreateStruct = reinterpret_cast<LPCREATESTRUCT>( lParam );
-        SetWindowLongPtr(WindowHandle, GWL_USERDATA, reinterpret_cast<LONG_PTR>( CreateStruct->lpCreateParams ));
-        SetWindowLongPtr(WindowHandle, GWL_WNDPROC, reinterpret_cast<LONG_PTR>( wndProc ));
+        SetWindowLongPtr(WindowHandle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>( CreateStruct->lpCreateParams ));
+        SetWindowLongPtr(WindowHandle, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>( wndProc ));
         return wndProc(WindowHandle, Message, wParam, lParam);
     }
 
