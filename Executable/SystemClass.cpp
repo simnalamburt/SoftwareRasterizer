@@ -103,8 +103,9 @@ void SystemClass::Run(int ShowCommand)
     FALSE_WARNING( SetForegroundWindow(windowHandle) );
     FALSE_WARNING( SetFocus(windowHandle) );
 
+    last = getTimerCount();
     MSG message = {};
-
+    bool isIdleNeeded = true;
     while( true )
     {
         if ( PeekMessage(&message, nullptr, 0, 0, PM_REMOVE) )
@@ -114,15 +115,15 @@ void SystemClass::Run(int ShowCommand)
             continue;
         }
         
-        if ( idle )
+        if ( isIdleNeeded && idle )
         {
             double now = getTimerCount();
-            if ( last == 0.0 ) last = now;
-            idle((now-last)/freq);
+            isIdleNeeded = idle((now-last)/freq);
             last = now;
         }
         else
         {
+            isIdleNeeded = true;
             WaitMessage();
         }
     }
