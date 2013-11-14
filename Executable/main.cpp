@@ -31,7 +31,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
     // Ã¢ ¶ç¿ì±â
     SystemClass window(hInstance, width, height, false);
-    window.onDraw = [&info, &screen](HDC hdc)
+    
+    window.onDraw([&info, &screen](HDC hdc)
     {
         size_t width = info.bmiHeader.biWidth;
         size_t height = info.bmiHeader.biHeight;
@@ -48,6 +49,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         });
 
         SetDIBitsToDevice(hdc, 0, 0, width, height, 0, 0, 0, height, &screen[0][0], &info, DIB_RGB_COLORS);
-    };
+    });
     window.Run(nCmdShow);
 }

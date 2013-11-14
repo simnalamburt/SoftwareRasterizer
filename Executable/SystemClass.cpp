@@ -114,11 +114,11 @@ void SystemClass::Run(int ShowCommand)
             continue;
         }
         
-        if ( onIdle )
+        if ( idle )
         {
             double now = getTimerCount();
             if ( last == 0.0 ) last = now;
-            onIdle((now-last)/freq);
+            idle((now-last)/freq);
             last = now;
         }
         else
@@ -155,11 +155,11 @@ LRESULT CALLBACK SystemClass::messageHandler(HWND WindowHandle, UINT Message, WP
     switch ( Message )
     {
     case WM_PAINT:
-        if ( onDraw )
+        if ( draw )
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(windowHandle, &ps);
-            onDraw(hdc);
+            draw(hdc);
             EndPaint(windowHandle, &ps);
         }
         return 0;
