@@ -31,7 +31,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
     // Ã¢ ¶ç¿ì±â
     SystemClass window(hInstance, width, height, false);
-    
     window.onDraw([&info, &screen](HDC hdc)
     {
         size_t width = info.bmiHeader.biWidth;
