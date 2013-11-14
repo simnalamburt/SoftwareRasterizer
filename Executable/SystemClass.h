@@ -1,5 +1,6 @@
 #pragma once
 
+// 새 윈도우를 생성하는 클래스이다. WinAPI 함수들을 래핑하는 클래스이다.
 class SystemClass : Uncopyable
 {
 private:
@@ -14,7 +15,7 @@ private:
     function<void(HDC)> draw;
 
 public:
-    // HINSTANCE : 생성될 윈도우가 종속될 프로그램의 인스턴스
+    // InstanceHandle : 생성될 윈도우가 종속될 프로그램의 인스턴스
     // Width : 생성될 윈도우의 초기 가로길이
     // Height : 생성될 윈도우의 초기 세로길이
     // FullScreen : 전체화면 여부
