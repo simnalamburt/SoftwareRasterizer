@@ -4,22 +4,10 @@
     <Filter Include="[pch]">
       <UniqueIdentifier>{1cba4cf7-1db5-4b21-a888-e6df7380b4f7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SystemClass">
-      <UniqueIdentifier>{5b833296-24e0-4232-b6ee-84bc1b6a3d82}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="resource">
-      <UniqueIdentifier>{2cdf0e9a-38aa-40a9-b02b-a3b8b16e4c5f}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>[pch]</Filter>
-    </ClInclude>
-    <ClInclude Include="SystemClass.h">
-      <Filter>SystemClass</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -27,13 +15,5 @@
       <Filter>[pch]</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="SystemClass.cpp">
-      <Filter>SystemClass</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Executable.rc">
-      <Filter>resource</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>

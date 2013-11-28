@@ -20,7 +20,8 @@ using std::function;
 // Intel TBB
 #include <tbb/parallel_for.h>
 
-// 사용자 헤더
-#include <ErrorReporter.h>
-#include <Uncopyable.h>
-#include <Utility.h>
+// Easy D3D
+#pragma comment ( lib, "Utility.lib" )
+#include <EasyD3D/Utility.h>
+#pragma comment ( lib, "Core.lib" )
+#include <EasyD3D/EasyD3D.h>

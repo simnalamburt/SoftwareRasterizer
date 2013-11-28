@@ -1,7 +1,8 @@
 #include "pch.h"
-#include "SystemClass.h"
 
 using namespace tbb;
+
+
 
 inline int ARGB(BYTE A, BYTE R, BYTE G, BYTE B)
 {
@@ -30,8 +31,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
 
     // Ã¢ ¶ç¿ì±â
-    SystemClass window(hInstance, width, height, false);
-    window.onDraw([&info, &screen](HDC hdc)
+    WindowDesc desc;
+    desc.WindowTitle(L"Multi-threaded Software Rasterizer!");
+    desc.WindowSize(width, height);
+    GdiWindow window(desc);
+    window.setDraw([&info, &screen](HDC hdc)
     {
         size_t width = info.bmiHeader.biWidth;
         size_t height = info.bmiHeader.biHeight;

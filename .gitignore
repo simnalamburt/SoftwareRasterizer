@@ -184,5 +184,6 @@ $RECYCLE.BIN/
 
 
 
-### Intel TBB ###
+### Libraries ###
 !Intel TBB/**/*
+!Easy D3D/**/*
