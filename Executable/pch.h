@@ -7,15 +7,12 @@
 #define NOMINMAX
 #include <Windows.h>
 
-// C++ 헤더
-#include <string>
-#include <memory>
-using std::unique_ptr;
-using std::shared_ptr;
-using std::weak_ptr;
+// DirectXMath.h
+#include <DirectXMath.h>
 
-#include <functional>
-using std::function;
+// C++ 헤더
+#include <array>
+#include <memory>
 
 // Intel TBB
 #include <tbb/parallel_for.h>
