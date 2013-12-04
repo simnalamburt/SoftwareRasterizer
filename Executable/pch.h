@@ -9,8 +9,10 @@
 
 // DirectXMath.h
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 
 // C++ Çì´õ
+#include <queue>
 #include <array>
 #include <memory>
 

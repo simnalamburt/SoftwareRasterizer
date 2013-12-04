@@ -1,10 +1,39 @@
 #include "pch.h"
 
 using namespace std;
-using namespace DirectX;
 using namespace tbb;
+using namespace DirectX;
+using namespace DirectX::TriangleTests;
 
 
+
+class PRIMITIVE
+{
+    XMVECTOR a, b, c;
+    XMVECTOR plane;
+    uint color;
+
+public:
+    PRIMITIVE() = default;
+    PRIMITIVE(FXMVECTOR A, FXMVECTOR B, FXMVECTOR C, uint Color)
+        : a(A), b(B), c(C), plane(XMPlaneFromPoints(A, B, C)), color(Color) { }
+
+    bool Test(FXMVECTOR Point) const
+    {
+        XMVECTORF32 direction = { 0, 0, 1, 0 };
+        float dist = 0.2f;
+        return Intersects(Point, direction, a, b, c, dist);
+    }
+
+    float Z(FXMVECTOR Point) const
+    {
+        XMVECTORF32 delta = { 0, 0, 1, 0 };
+        XMVECTOR Intersect = XMPlaneIntersectLine(plane, Point, Point + delta);
+        return XMVectorGetZ(Intersect);
+    }
+
+    uint getColor() const { return color; }
+};
 
 inline int ARGB(BYTE A, BYTE R, BYTE G, BYTE B)
 {
@@ -30,23 +59,21 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     info.bmiHeader.biCompression = BI_RGB;
 
     // ºñÆ®¸Ê ¹öÆÛ
-    XMFLOAT4A A(380, 130, 0, 1);
-    XMFLOAT4A B(170, 360, 0, 1);
-    XMFLOAT4A C(600, 400, 0, 1);
-    if (A.y > B.y) swap(A, B);
-    if (A.y > C.y) swap(A, C);
-    if (B.y > C.y) swap(B, C);
+    array<PRIMITIVE, 2> triangles;
+    {
+        XMVECTORF32 A = { 50, 150, 1, 1 };
+        XMVECTORF32 B = { 240, 440, 1, 1 };
+        XMVECTORF32 C = { 600, 275, 0, 1 };
+        triangles[0] = { A, B, C, 0x00a2ff };
+    }
+    {
+        XMVECTORF32 A = { 700, 125, 1, 1 };
+        XMVECTORF32 B = { 660, 525, 1, 1 };
+        XMVECTORF32 C = { 275, 275, 0, 1 };
+        triangles[1] = { A, B, C, 0xff5959 };
+    }
 
-    XMVECTOR a = XMLoadFloat4A(&A);
-    XMVECTOR b = XMLoadFloat4A(&B);
-    XMVECTOR c = XMLoadFloat4A(&C);
-    XMVECTOR ab = b - a, bc = c - b, ca = a - c;
-    XMFLOAT4A AB, BC, CA;
-    XMStoreFloat4A(&AB, ab);
-    XMStoreFloat4A(&BC, bc);
-    XMStoreFloat4A(&CA, ca);
-    
-    
+
 
     unique_ptr<int[]> buffer(new int[width*height]);
     unique_ptr<int*[]> screen(new int*[height]);
@@ -63,31 +90,27 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         {
             for (size_t y = r.begin(); y < r.end(); ++y)
             {
-                float AB_X = AB.x / AB.y * (y - A.y) + A.x;
-                float BC_X = BC.x / BC.y * (y - B.y) + B.x;
-                float CA_X = CA.x / CA.y * (y - C.y) + C.x;
+                for (size_t x = 0; x < width; ++x)
+                {
+                    uint Color = 0xffffff;
+                    float Z = numeric_limits<float>::infinity();
 
-                function<void()> code;
-                if (A.y <= y && y < B.y)
-                {
-                    for (size_t x = 0; x < width; ++x)
+                    XMVECTORF32 point = { (float)x, (float)y, 0, 1 };
+
+                    for (size_t i = 0; i < triangles.size(); ++i)
                     {
-                        screen[y][x] = ((CA_X <= x && x < AB_X) || (AB_X <= x && x <CA_X)) ? 0x4a8eff : 0xffffff;
+                        if (triangles[i].Test(point))
+                        {
+                            float z = triangles[i].Z(point);
+                            if (Z > z)
+                            {
+                                Z = z;
+                                Color = triangles[i].getColor();
+                            }
+                        }
                     }
-                }
-                else if (B.y <= y && y< C.y)
-                {
-                    for (size_t x = 0; x < width; ++x)
-                    {
-                        screen[y][x] = ((CA_X <= x && x < BC_X) || (BC_X <= x && x <CA_X)) ? 0x4a8eff : 0xffffff;
-                    }
-                }
-                else
-                {
-                    for (size_t x = 0; x < width; ++x)
-                    {
-                        screen[y][x] = 0xffffff;
-                    }
+
+                    screen[y][x] = Color;
                 }
             }
         });
