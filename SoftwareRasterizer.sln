@@ -1,7 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Executable", "Executable\Executable.vcxproj", "{F94D3027-8447-485D-89A3-14D78C3FE654}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EasyD3D", "EasyD3D\EasyD3D.vcxproj", "{C3B9849A-2B90-421F-B191-DD6C463B190A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +17,10 @@ Global
 		{F94D3027-8447-485D-89A3-14D78C3FE654}.Debug|Win32.Build.0 = Debug|Win32
 		{F94D3027-8447-485D-89A3-14D78C3FE654}.Release|Win32.ActiveCfg = Release|Win32
 		{F94D3027-8447-485D-89A3-14D78C3FE654}.Release|Win32.Build.0 = Release|Win32
+		{C3B9849A-2B90-421F-B191-DD6C463B190A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C3B9849A-2B90-421F-B191-DD6C463B190A}.Debug|Win32.Build.0 = Debug|Win32
+		{C3B9849A-2B90-421F-B191-DD6C463B190A}.Release|Win32.ActiveCfg = Release|Win32
+		{C3B9849A-2B90-421F-B191-DD6C463B190A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,6 +4,7 @@ using namespace std;
 using namespace tbb;
 using namespace DirectX;
 using namespace DirectX::TriangleTests;
+using namespace EasyD3D;
 
 
 

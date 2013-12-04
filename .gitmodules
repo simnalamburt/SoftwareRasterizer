@@ -1,0 +1,3 @@
+[submodule "EasyD3D"]
+	path = EasyD3D
+	url = git://github.com/simnalamburt/EasyD3D.git
