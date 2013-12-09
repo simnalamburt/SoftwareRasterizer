@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "ScreenBuffer.h"
 
 using namespace std;
 using namespace tbb;
@@ -8,115 +9,180 @@ using namespace EasyD3D;
 
 
 
-class PRIMITIVE
+__declspec(align(16))
+struct Vertex
 {
-    XMVECTOR a, b, c;
-    XMVECTOR plane;
-    uint color;
-
-public:
-    PRIMITIVE() = default;
-    PRIMITIVE(FXMVECTOR A, FXMVECTOR B, FXMVECTOR C, uint Color)
-        : a(A), b(B), c(C), plane(XMPlaneFromPoints(A, B, C)), color(Color) { }
-
-    bool Test(FXMVECTOR Point) const
-    {
-        XMVECTORF32 direction = { 0, 0, 1, 0 };
-        float dist = 0.2f;
-        return Intersects(Point, direction, a, b, c, dist);
-    }
-
-    float Z(FXMVECTOR Point) const
-    {
-        XMVECTORF32 delta = { 0, 0, 1, 0 };
-        XMVECTOR Intersect = XMPlaneIntersectLine(plane, Point, Point + delta);
-        return XMVectorGetZ(Intersect);
-    }
-
-    uint getColor() const { return color; }
+    XMVECTOR Position;
+    XMVECTOR Color;
 };
 
-inline int ARGB(BYTE A, BYTE R, BYTE G, BYTE B)
+struct Primitive
 {
-    return (A << 24) | (R << 16) | (G << 8) | B;
+    union {
+        struct { size_t A, B, C; };
+        size_t Indices[3];
+    };
+
+    Primitive() = default;
+    Primitive(size_t A, size_t B, size_t C) : A(A), B(B), C(C) {}
+};
+
+
+
+struct Edge
+{
+    const XMVECTOR& A, B;
+    float minY, maxY;
+    const Primitive* pParent;
+
+    Edge(const XMVECTOR& A, const XMVECTOR& B, const Primitive& Parent) : A(A), B(B), pParent(&Parent)
+    {
+        minY = XMVectorGetY(A); maxY = XMVectorGetY(B);
+        if (minY > maxY) swap(minY, maxY);
+    }
+
+    bool TestY(float Y) const { return minY <= Y && Y < maxY; }
+};
+
+struct ActiveEdge
+{
+    float X, Z;
+    const Primitive* pParent;
+
+    ActiveEdge(const Edge& TargetEdge, float TargetY) : pParent(TargetEdge.pParent)
+    {
+        XMVECTOR Delta = TargetEdge.B - TargetEdge.A;
+
+        float AY = XMVectorGetY(TargetEdge.A);
+        float DeltaY = XMVectorGetY(Delta);
+
+        XMVECTOR Result = XMVectorReplicate((TargetY - AY) / DeltaY)*Delta + TargetEdge.A;
+        XMFLOAT3A result;
+        XMStoreFloat3A(&result, Result);
+        
+        X = result.x;
+        Z = result.z;
+    }
+};
+bool operator<(const ActiveEdge& Left, const ActiveEdge& Right) { return Left.X < Right.X; }
+
+uint Color(FXMVECTOR ColorVector)
+{
+    XMFLOAT3A color;
+    XMStoreFloat3A(&color, ColorVector);
+    return (uint(255 * color.x) & 0xFF) << 16 | (uint(255 * color.y) & 0xFF) << 8 | (uint(255 * color.z) & 0xFF);
 }
 
-inline int ARGB(BYTE R, BYTE G, BYTE B)
-{
-    return (R << 16) | (G << 8) | B;
-}
+
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     size_t width = 800, height = 600;
 
-    // 비트맵 정보파일
-    BITMAPINFO info = {};
-    info.bmiHeader.biSize = sizeof BITMAPINFOHEADER;
-    info.bmiHeader.biWidth = width;
-    info.bmiHeader.biHeight = height;
-    info.bmiHeader.biPlanes = 1;
-    info.bmiHeader.biBitCount = 32;
-    info.bmiHeader.biCompression = BI_RGB;
-
-    // 비트맵 버퍼
-    array<PRIMITIVE, 2> triangles;
+    // 모델 정보
+    vector<Vertex> vertexBuffer =
     {
-        XMVECTORF32 A = { 50, 150, 1, 1 };
-        XMVECTORF32 B = { 240, 440, 1, 1 };
-        XMVECTORF32 C = { 600, 275, 0, 1 };
-        triangles[0] = { A, B, C, 0x00a2ff };
-    }
+        { XMVectorSet(50, 150, 1, 1), XMVectorSet(0, 0.63f, 1, 0) },
+        { XMVectorSet(240, 440, 1, 1), XMVectorSet(0, 0.63f, 1, 0) },
+        { XMVectorSet(600, 275, 0, 1), XMVectorSet(0, 0.63f, 1, 0) },
+        { XMVectorSet(700, 125, 1, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
+        { XMVectorSet(660, 525, 1, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
+        { XMVectorSet(275, 275, 0, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
+    };
+    vector<Primitive> indexBuffer =
     {
-        XMVECTORF32 A = { 700, 125, 1, 1 };
-        XMVECTORF32 B = { 660, 525, 1, 1 };
-        XMVECTORF32 C = { 275, 275, 0, 1 };
-        triangles[1] = { A, B, C, 0xff5959 };
-    }
+        { 0, 1, 2 },
+        { 3, 4, 5 }
+    };
 
-
-
-    unique_ptr<int[]> buffer(new int[width*height]);
-    unique_ptr<int*[]> screen(new int*[height]);
-    for (size_t i = 0; i < height; ++i) screen[i] = &buffer[i*width];
+    // 스크린 버퍼
+    ScreenBuffer screenBuffer(width, height);
 
     // 창 띄우기
     WindowDesc desc;
     desc.WindowTitle(L"Multi-threaded Software Rasterizer!");
     desc.WindowSize(width, height);
     GdiWindow window(desc);
-    window.setDraw([&](HDC hdc)
+    window.setDraw([&](HDC HDC)
     {
+        // 버퍼 클리어
+        screenBuffer.ClearBuffer();
+
+        // 에지 테이블 생성
+        vector<Edge> edgeTable;
+        for (const auto& primitive : indexBuffer)
+        {
+            for (size_t i = 0; i < 2; i++)
+                edgeTable.emplace_back(vertexBuffer[primitive.Indices[i]].Position, vertexBuffer[primitive.Indices[i + 1]].Position, primitive);
+            edgeTable.emplace_back(vertexBuffer[primitive.Indices[2]].Position, vertexBuffer[primitive.Indices[0]].Position, primitive);
+        }
+
+        // 스캔 라인 컨버전
         parallel_for(blocked_range<size_t>(0, height), [&](const blocked_range<size_t>& r)
         {
             for (size_t y = r.begin(); y < r.end(); ++y)
             {
-                for (size_t x = 0; x < width; ++x)
+                vector<ActiveEdge> activeTable;
+                for (const auto& edge : edgeTable)
+                    if (edge.TestY(y)) activeTable.emplace_back(edge, y);
+                if (activeTable.empty()) continue;
+
+                sort(activeTable.begin(), activeTable.end());
+                for (size_t i = 0; i < activeTable.size()-1; ++i)
                 {
-                    uint Color = 0xffffff;
-                    float Z = numeric_limits<float>::infinity();
+                    ActiveEdge* pA = &activeTable[i];
+                    ActiveEdge* pB = &activeTable[i + 1];
 
-                    XMVECTORF32 point = { (float)x, (float)y, 0, 1 };
-
-                    for (size_t i = 0; i < triangles.size(); ++i)
+                    uint color = Color(vertexBuffer[pA->pParent->A].Color);
+                    if (i == activeTable.size() - 1)
+                        color = Color(vertexBuffer[pB->pParent->A].Color);
+                    for (size_t x = pA->X; x < pB->X; x++)
+                        screenBuffer(x, y) = color;
+                    if (i != activeTable.size() - 2 &&
+                        pA->pParent != pB->pParent &&
+                        pB->pParent != activeTable[i + 2].pParent)
                     {
-                        if (triangles[i].Test(point))
+                        pA = pB;
+                        pB = &activeTable[++i];
+                        for (size_t x = pA->X; x < pB->X; x++)
                         {
-                            float z = triangles[i].Z(point);
-                            if (Z > z)
+                            float Z = numeric_limits<float>::infinity();
+
+                            XMVECTORF32 point = { (float)x, (float)y, 0, 1 };
+                            XMVECTORF32 direction = { 0, 0, 1, 0 };
+
+                            float z1, z2;
+                            Intersects((XMVECTOR)point, (XMVECTOR)direction,
+                                vertexBuffer[pA->pParent->A].Position,
+                                vertexBuffer[pA->pParent->B].Position,
+                                vertexBuffer[pA->pParent->C].Position, z1);
+                            Intersects((XMVECTOR)point, (XMVECTOR)direction,
+                                vertexBuffer[pB->pParent->A].Position,
+                                vertexBuffer[pB->pParent->B].Position,
+                                vertexBuffer[pB->pParent->C].Position, z2);
+
+                            if (Z > z1)
                             {
-                                Z = z;
-                                Color = triangles[i].getColor();
+                                Z = z1;
+                                screenBuffer(x, y) = Color(vertexBuffer[pA->pParent->A].Color);
+                            }
+                            if (Z > z2)
+                            {
+                                Z = z2;
+                                screenBuffer(x, y) = Color(vertexBuffer[pB->pParent->A].Color);
                             }
                         }
                     }
-
-                    screen[y][x] = Color;
+                    if (i != activeTable.size() - 2 && pA->pParent != pB->pParent)
+                    {
+                        pA = pB;
+                        pB = &activeTable[++i];
+                    }
                 }
             }
         });
 
-        SetDIBitsToDevice(hdc, 0, 0, width, height, 0, 0, 0, height, &screen[0][0], &info, DIB_RGB_COLORS);
+        screenBuffer.Present(HDC);
     });
     window.Run(nCmdShow);
 }

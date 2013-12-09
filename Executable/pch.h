@@ -12,8 +12,8 @@
 #include <DirectXCollision.h>
 
 // C++ Çì´õ
-#include <queue>
 #include <array>
+#include <vector>
 #include <memory>
 
 // Intel TBB
