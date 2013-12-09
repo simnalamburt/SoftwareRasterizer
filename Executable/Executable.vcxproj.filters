@@ -9,11 +9,13 @@
     <ClInclude Include="pch.h">
       <Filter>[pch]</Filter>
     </ClInclude>
+    <ClInclude Include="ScreenBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>[pch]</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ScreenBuffer.cpp" />
   </ItemGroup>
 </Project>
