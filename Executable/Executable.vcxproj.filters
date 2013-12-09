@@ -4,18 +4,26 @@
     <Filter Include="[pch]">
       <UniqueIdentifier>{1cba4cf7-1db5-4b21-a888-e6df7380b4f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ScreenBuffer">
+      <UniqueIdentifier>{a99be962-7db0-414c-bbbd-e5a4f3d6c5c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>[pch]</Filter>
     </ClInclude>
-    <ClInclude Include="ScreenBuffer.h" />
+    <ClInclude Include="ScreenBuffer.h">
+      <Filter>ScreenBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="AlignedAllocator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>[pch]</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ScreenBuffer.cpp" />
+    <ClCompile Include="ScreenBuffer.cpp">
+      <Filter>ScreenBuffer</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

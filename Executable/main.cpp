@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ScreenBuffer.h"
+#include "AlignedAllocator.h"
 
 using namespace std;
 using namespace tbb;
@@ -29,13 +30,14 @@ struct Primitive
 
 
 
+__declspec(align(16))
 struct Edge
 {
-    const XMVECTOR& A, B;
+    XMVECTOR A, B;
     float minY, maxY;
     const Primitive* pParent;
 
-    Edge(const XMVECTOR& A, const XMVECTOR& B, const Primitive& Parent) : A(A), B(B), pParent(&Parent)
+    Edge(FXMVECTOR A, FXMVECTOR B, const Primitive& Parent) : A(A), B(B), pParent(&Parent)
     {
         minY = XMVectorGetY(A); maxY = XMVectorGetY(B);
         if (minY > maxY) swap(minY, maxY);
@@ -59,7 +61,7 @@ struct ActiveEdge
         XMVECTOR Result = XMVectorReplicate((TargetY - AY) / DeltaY)*Delta + TargetEdge.A;
         XMFLOAT3A result;
         XMStoreFloat3A(&result, Result);
-        
+
         X = result.x;
         Z = result.z;
     }
@@ -80,7 +82,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     size_t width = 800, height = 600;
 
     // 모델 정보
-    vector<Vertex> vertexBuffer =
+    vector<Vertex, _aligned_allocator<Vertex>> vertexBuffer =
     {
         { XMVectorSet(50, 150, 1, 1), XMVectorSet(0, 0.63f, 1, 0) },
         { XMVectorSet(240, 440, 1, 1), XMVectorSet(0, 0.63f, 1, 0) },
@@ -109,12 +111,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         screenBuffer.ClearBuffer();
 
         // 에지 테이블 생성
-        vector<Edge> edgeTable;
+        vector<Edge, _aligned_allocator<Edge>> edgeTable;
         for (const auto& primitive : indexBuffer)
         {
-            for (size_t i = 0; i < 2; i++)
-                edgeTable.emplace_back(vertexBuffer[primitive.Indices[i]].Position, vertexBuffer[primitive.Indices[i + 1]].Position, primitive);
-            edgeTable.emplace_back(vertexBuffer[primitive.Indices[2]].Position, vertexBuffer[primitive.Indices[0]].Position, primitive);
+            auto V = [&](size_t i){ return vertexBuffer[primitive.Indices[i]].Position; };
+            edgeTable.emplace_back(V(0), V(1), primitive);
+            edgeTable.emplace_back(V(1), V(2), primitive);
+            edgeTable.emplace_back(V(2), V(0), primitive);
         }
 
         // 스캔 라인 컨버전
@@ -124,59 +127,47 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
             {
                 vector<ActiveEdge> activeTable;
                 for (const auto& edge : edgeTable)
-                    if (edge.TestY(y)) activeTable.emplace_back(edge, y);
+                if (edge.TestY((float)y)) activeTable.emplace_back(edge, (float)y);
                 if (activeTable.empty()) continue;
 
-                sort(activeTable.begin(), activeTable.end());
-                for (size_t i = 0; i < activeTable.size()-1; ++i)
+                sort(activeTable.rbegin(), activeTable.rend());
+                hash_set<const Primitive*> openedPrimitives;
+                for (size_t x = 0; x < width; ++x)
                 {
-                    ActiveEdge* pA = &activeTable[i];
-                    ActiveEdge* pB = &activeTable[i + 1];
-
-                    uint color = Color(vertexBuffer[pA->pParent->A].Color);
-                    if (i == activeTable.size() - 1)
-                        color = Color(vertexBuffer[pB->pParent->A].Color);
-                    for (size_t x = pA->X; x < pB->X; x++)
-                        screenBuffer(x, y) = color;
-                    if (i != activeTable.size() - 2 &&
-                        pA->pParent != pB->pParent &&
-                        pB->pParent != activeTable[i + 2].pParent)
+                    while (!activeTable.empty() && !(x < activeTable.back().X))
                     {
-                        pA = pB;
-                        pB = &activeTable[++i];
-                        for (size_t x = pA->X; x < pB->X; x++)
-                        {
-                            float Z = numeric_limits<float>::infinity();
+                        auto result = openedPrimitives.find(activeTable.back().pParent);
+                        if (result == openedPrimitives.cend())
+                            openedPrimitives.insert(activeTable.back().pParent);
+                        else
+                            openedPrimitives.erase(result);
+                        activeTable.pop_back();
+                    }
 
-                            XMVECTORF32 point = { (float)x, (float)y, 0, 1 };
+                    size_t number = openedPrimitives.size();
+                    if (number == 1)
+                    {
+                        screenBuffer(x, y) = Color(vertexBuffer[(*openedPrimitives.begin())->A].Color);
+                    }
+                    else
+                    {
+                        float z0 = numeric_limits<float>::infinity();
+                        for (const Primitive* pPrimitive : openedPrimitives)
+                        {
+                            // pPrimitive
+                            XMVECTORF32 origin = { (float)x, (float)y, 0, 1 };
                             XMVECTORF32 direction = { 0, 0, 1, 0 };
 
-                            float z1, z2;
-                            Intersects((XMVECTOR)point, (XMVECTOR)direction,
-                                vertexBuffer[pA->pParent->A].Position,
-                                vertexBuffer[pA->pParent->B].Position,
-                                vertexBuffer[pA->pParent->C].Position, z1);
-                            Intersects((XMVECTOR)point, (XMVECTOR)direction,
-                                vertexBuffer[pB->pParent->A].Position,
-                                vertexBuffer[pB->pParent->B].Position,
-                                vertexBuffer[pB->pParent->C].Position, z2);
+                            float z;
+                            auto V = [&](size_t i){return vertexBuffer[pPrimitive->Indices[i]].Position; };
+                            Intersects(origin, direction, V(0), V(1), V(2), z);
 
-                            if (Z > z1)
+                            if (z < z0)
                             {
-                                Z = z1;
-                                screenBuffer(x, y) = Color(vertexBuffer[pA->pParent->A].Color);
-                            }
-                            if (Z > z2)
-                            {
-                                Z = z2;
-                                screenBuffer(x, y) = Color(vertexBuffer[pB->pParent->A].Color);
+                                z0 = z;
+                                screenBuffer(x, y) = Color(vertexBuffer[pPrimitive->A].Color);
                             }
                         }
-                    }
-                    if (i != activeTable.size() - 2 && pA->pParent != pB->pParent)
-                    {
-                        pA = pB;
-                        pB = &activeTable[++i];
                     }
                 }
             }

@@ -82,6 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AlignedAllocator.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ScreenBuffer.h" />
   </ItemGroup>
