@@ -30,50 +30,31 @@ struct Primitive
 
 
 
-__declspec(align(16))
 struct Edge
 {
-    XMVECTOR A, B;
-    float minY, maxY;
+    XMFLOAT2A A, B; // A.y <= B.y
     const Primitive* pParent;
 
-    Edge(FXMVECTOR A, FXMVECTOR B, const Primitive& Parent) : A(A), B(B), pParent(&Parent)
+    Edge(FXMVECTOR a, FXMVECTOR b, const Primitive& Parent) : pParent(&Parent)
     {
-        minY = XMVectorGetY(A); maxY = XMVectorGetY(B);
-        if (minY > maxY) swap(minY, maxY);
+        XMStoreFloat2A(&A, a);
+        XMStoreFloat2A(&B, b);
+        if (!(A.y <= B.y)) swap(A, B);
     }
 
-    bool TestY(float Y) const { return minY <= Y && Y < maxY; }
+    bool TestY(float Y) const { return A.y <= Y && Y < B.y; }
 };
 
 struct ActiveEdge
 {
-    float X, Z;
+    float X;
     const Primitive* pParent;
 
-    ActiveEdge(const Edge& TargetEdge, float TargetY) : pParent(TargetEdge.pParent)
-    {
-        XMVECTOR Delta = TargetEdge.B - TargetEdge.A;
-
-        float AY = XMVectorGetY(TargetEdge.A);
-        float DeltaY = XMVectorGetY(Delta);
-
-        XMVECTOR Result = XMVectorReplicate((TargetY - AY) / DeltaY)*Delta + TargetEdge.A;
-        XMFLOAT3A result;
-        XMStoreFloat3A(&result, Result);
-
-        X = result.x;
-        Z = result.z;
-    }
+    ActiveEdge(const Edge& TargetEdge, float TargetY) :
+        X((TargetY - TargetEdge.A.y) / (TargetEdge.B.y - TargetEdge.A.y)*(TargetEdge.B.x - TargetEdge.A.x) + TargetEdge.A.x),
+        pParent(TargetEdge.pParent) { }
 };
 bool operator<(const ActiveEdge& Left, const ActiveEdge& Right) { return Left.X < Right.X; }
-
-uint Color(FXMVECTOR ColorVector)
-{
-    XMFLOAT3A color;
-    XMStoreFloat3A(&color, ColorVector);
-    return (uint(255 * color.x) & 0xFF) << 16 | (uint(255 * color.y) & 0xFF) << 8 | (uint(255 * color.z) & 0xFF);
-}
 
 
 
@@ -84,12 +65,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     // 모델 정보
     vector<Vertex, _aligned_allocator<Vertex>> vertexBuffer =
     {
-        { XMVectorSet(50, 150, 1, 1), XMVectorSet(0, 0.63f, 1, 0) },
-        { XMVectorSet(240, 440, 1, 1), XMVectorSet(0, 0.63f, 1, 0) },
+        { XMVectorSet(50, 150, 1, 1), XMVectorSet(0.6f, 0.43f, 1, 0) },
+        { XMVectorSet(240, 440, 1, 1), XMVectorSet(0.3f, 0.53f, 1, 0) },
         { XMVectorSet(600, 275, 0, 1), XMVectorSet(0, 0.63f, 1, 0) },
-        { XMVectorSet(700, 125, 1, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
+        { XMVectorSet(700, 125, 1, 1), XMVectorSet(1, 0.65f, 0.05f, 0) },
         { XMVectorSet(660, 525, 1, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
-        { XMVectorSet(275, 275, 0, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
+        { XMVectorSet(275, 275, 0, 1), XMVectorSet(1, 0.05f, 0.65f, 0) },
     };
     vector<Primitive> indexBuffer =
     {
@@ -111,7 +92,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         screenBuffer.ClearBuffer();
 
         // 에지 테이블 생성
-        vector<Edge, _aligned_allocator<Edge>> edgeTable;
+        vector<Edge> edgeTable;
         for (const auto& primitive : indexBuffer)
         {
             auto V = [&](size_t i){ return vertexBuffer[primitive.Indices[i]].Position; };
@@ -125,50 +106,72 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         {
             for (size_t y = r.begin(); y < r.end(); ++y)
             {
+                // AET 생성
                 vector<ActiveEdge> activeTable;
                 for (const auto& edge : edgeTable)
                 if (edge.TestY((float)y)) activeTable.emplace_back(edge, (float)y);
                 if (activeTable.empty()) continue;
 
+                // x값 순으로 정렬
                 sort(activeTable.rbegin(), activeTable.rend());
-                hash_set<const Primitive*> openedPrimitives;
+                unordered_set<const Primitive*> openedPrimitives;
                 for (size_t x = 0; x < width; ++x)
                 {
+                    // 현재 점이 어느 도형 안에 포함되어있는지 체크
                     while (!activeTable.empty() && !(x < activeTable.back().X))
                     {
                         auto result = openedPrimitives.find(activeTable.back().pParent);
-                        if (result == openedPrimitives.cend())
-                            openedPrimitives.insert(activeTable.back().pParent);
-                        else
-                            openedPrimitives.erase(result);
+                        if (result == openedPrimitives.cend()) openedPrimitives.insert(activeTable.back().pParent);
+                        else openedPrimitives.erase(result);
                         activeTable.pop_back();
                     }
 
+                    // 0개 도형에 포함된경우 : skip
+                    // 1개 도형에 포함된경우 : 바로 그리기 수행
+                    // >2 도형에 포함된경우 : z값 검사 수행
                     size_t number = openedPrimitives.size();
-                    if (number == 1)
-                    {
-                        screenBuffer(x, y) = Color(vertexBuffer[(*openedPrimitives.begin())->A].Color);
-                    }
+                    if (number == 0) continue;
+                    const Primitive* surface = nullptr;
+                    XMVECTORF32 origin = { (float)x, (float)y, 0, 1 };
+                    XMVECTORF32 direction = { 0, 0, 1, 0 };
+                    if (number == 1) surface = *openedPrimitives.begin();
                     else
                     {
                         float z0 = numeric_limits<float>::infinity();
                         for (const Primitive* pPrimitive : openedPrimitives)
                         {
-                            // pPrimitive
-                            XMVECTORF32 origin = { (float)x, (float)y, 0, 1 };
-                            XMVECTORF32 direction = { 0, 0, 1, 0 };
-
                             float z;
                             auto V = [&](size_t i){return vertexBuffer[pPrimitive->Indices[i]].Position; };
                             Intersects(origin, direction, V(0), V(1), V(2), z);
 
-                            if (z < z0)
-                            {
-                                z0 = z;
-                                screenBuffer(x, y) = Color(vertexBuffer[pPrimitive->A].Color);
-                            }
+                            if (z < z0) z0 = z, surface = pPrimitive;
                         }
                     }
+                    
+                    auto Pos = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Position; };
+                    auto C = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Color; };
+
+                    XMVECTOR t, s;
+                    {
+                        XMVECTORF32 X = { (float)x, (float)y, 1, 0 };
+                        XMVECTORF32 K = { 0, 0, 1, 0 };
+                        XMVECTOR Control = XMVectorSelectControl(0, 0, 1, 1);
+                        XMVECTOR A = XMVectorSelect(Pos(0), K, Control);
+                        XMVECTOR B = XMVectorSelect(Pos(1), K, Control);
+                        XMVECTOR C = XMVectorSelect(Pos(2), K, Control);
+
+                        XMVECTOR M = XMVector3Cross(XMVector3Cross(A, X), XMVector3Cross(B, C));
+
+                        t = XMVector2LengthEst(M - B) / XMVector2LengthEst(C - B);
+                        s = XMVector2LengthEst(X - A) / XMVector2LengthEst(M - A);
+                    }
+                    
+                    XMVECTOR Color = XMVectorLerpV(C(0), XMVectorLerpV(C(1), C(2), t), s);
+
+                    // 픽셀 셰이더
+                    XMFLOAT3A color;
+                    XMStoreFloat3A(&color, Color);
+                    screenBuffer(x, y) = (uint(255 * color.x) & 0xFF) << 16 | (uint(255 * color.y) & 0xFF) << 8 | (uint(255 * color.z) & 0xFF);
                 }
             }
         });
