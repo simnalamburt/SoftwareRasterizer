@@ -184,6 +184,25 @@ HRESULT LoadFBX(vector<MyVertex>* pOutVertexVector, const char* path)
 					vertexCount++;
 				}
 			}
+			
+			int materialCount = pFbxChildNode->GetSrcObjectCount<FbxSurfaceMaterial>();
+
+			for (int index = 0; index < materialCount; index++);
+			{
+				FbxSurfaceMaterial* material = (FbxSurfaceMaterial*)pFbxChildNode->GetSrcObject<FbxSurfaceMaterial>(index);
+				if (material != NULL)
+				{
+					FbxProperty prop = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+					int layeredTextureCount = prop.GetSrcObjectCount<FbxLayeredTexture>();
+					if (layeredTextureCount > 0)
+					{
+						for (int j = 0; j < layeredTextureCount; j++)
+						{
+							FbxLayeredTexture
+						}
+					}
+				}
+			}
 		}
 	}
 	return S_OK;
@@ -193,7 +212,7 @@ HRESULT LoadFBX(vector<MyVertex>* pOutVertexVector, const char* path)
 
 	if (pProperty.IsValid())
 	{
-		//int lTextureCount = pProperty.GetSrcObjectCount();
+		int lTextureCount = pProperty.GetSrcObjectCount();
 
 		for (int j = 0; j < lTextureCount; ++j)
 		{
