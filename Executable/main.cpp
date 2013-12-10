@@ -103,6 +103,7 @@ public:
         FALSE_ERROR(importer->Import(scene));
 
         FbxNode* rootNode = scene->GetRootNode();
+        RAII{ rootNode->Destroy(true); };
         if (rootNode)
         {
             for (int i = 0; i < rootNode->GetChildCount(); i++)
@@ -149,13 +150,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     size_t width = 800, height = 600;
 
-    // 모델 정보
+    // 모델, 광원 정보
     FbxLoader Model("box.fbx");
-    const auto& vertexBuffer = Model.getVertexBuffer();
-    const auto& indexBuffer = Model.getIndexBuffer();
-
     Light light = { XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
-
     // 스크린 버퍼
     ScreenBuffer screenBuffer(width, height);
 
@@ -166,8 +163,16 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     GdiWindow window(desc);
     window.setDraw([&](HDC HDC)
     {
-        // 버퍼 클리어
+        // 스크린버퍼 클리어
         screenBuffer.ClearBuffer();
+
+        // 버퍼 받아옴
+        auto vertexBuffer = Model.getVertexBuffer();
+        for (auto& vertex : vertexBuffer)
+        {
+            vertex.Position /= 2.0f;
+        }
+        const auto& indexBuffer = Model.getIndexBuffer();
 
         // 에지 테이블 생성
         vector<Edge, _aligned_allocator<Edge>> edgeTable;
@@ -260,5 +265,3 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     });
     window.Run(nCmdShow);
 }
-
-
