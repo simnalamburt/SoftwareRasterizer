@@ -92,7 +92,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         screenBuffer.ClearBuffer();
 
         // 에지 테이블 생성
-        vector<Edge> edgeTable;
+        vector<Edge, _aligned_allocator<Edge>> edgeTable;
         for (const auto& primitive : indexBuffer)
         {
             auto V = [&](size_t i){ return vertexBuffer[primitive.Indices[i]].Position; };
@@ -148,25 +148,21 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                         }
                     }
                     
-                    auto Pos = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Position; };
-                    auto C = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Color; };
-
-                    XMVECTOR t, s;
+                    // Lerp
+                    XMVECTOR l0, l1, l2;
                     {
-                        XMVECTORF32 X = { (float)x, (float)y, 1, 0 };
-                        XMVECTORF32 K = { 0, 0, 1, 0 };
-                        XMVECTOR Control = XMVectorSelectControl(0, 0, 1, 1);
-                        XMVECTOR A = XMVectorSelect(Pos(0), K, Control);
-                        XMVECTOR B = XMVectorSelect(Pos(1), K, Control);
-                        XMVECTOR C = XMVectorSelect(Pos(2), K, Control);
+                        const XMVECTOR& A = vertexBuffer[surface->A].Position;
+                        const XMVECTOR& B = vertexBuffer[surface->B].Position;
+                        const XMVECTOR& C = vertexBuffer[surface->C].Position;
 
-                        XMVECTOR M = XMVector3Cross(XMVector3Cross(A, X), XMVector3Cross(B, C));
-
-                        t = XMVector2LengthEst(M - B) / XMVector2LengthEst(C - B);
-                        s = XMVector2LengthEst(X - A) / XMVector2LengthEst(M - A);
+                        XMVECTOR ABC = XMVector2Cross(A - B, B - C);
+                        l0 = XMVector2Cross(B - C, C - origin) / ABC;
+                        l1 = XMVector2Cross(C - A, A - origin) / ABC;
+                        l2 = XMVector2Cross(A - B, B - origin) / ABC;
                     }
-                    
-                    XMVECTOR Color = XMVectorLerpV(C(0), XMVectorLerpV(C(1), C(2), t), s);
+
+                    auto C = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Color; };
+                    XMVECTOR Color = l0*C(0) + l1*C(1) + l2*C(2);
 
                     // 픽셀 셰이더
                     XMFLOAT3A color;
