@@ -129,7 +129,7 @@ public:
                     {
                         const double* data = vertices[mesh->GetPolygonVertex(j, k)].mData;
                         vertexBuffer.emplace_back(
-                            XMVectorSet(data[0], data[1], data[2], data[3]),
+                            XMVectorSet(data[0], data[1], data[2], 1),
                             XMVectorReplicate(0),
                             XMVectorReplicate(0));
                     }
@@ -168,9 +168,17 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
         // ¹öÆÛ ¹Þ¾Æ¿È
         auto vertexBuffer = Model.getVertexBuffer();
+        XMVECTORF32 Eye = { 10, 10, -25, 1 };
+        XMVECTORF32 Focus = { 0, 0, 0, 1 };
+        XMVECTORF32 Up = { 0, 1, 0, 0 };
         for (auto& vertex : vertexBuffer)
         {
-            vertex.Position /= 2.0f;
+            auto& Pos = vertex.Position;
+            Pos = XMVector4Transform(Pos, XMMatrixLookAtRH(Eye, Focus, Up));
+            Pos = XMVector4Transform(Pos, XMMatrixPerspectiveFovRH(XM_PIDIV4, (float)width / (float)height, 0.1f, 100.0f));
+            Pos = XMVector4Transform(Pos, XMMatrixTranslation(1.0f, 1.0f, 0.0f));
+            Pos = XMVector4Transform(Pos, XMMatrixScaling((float)width / 2.0f, (float)height / 2.0f, 1.0f));
+            Pos /= XMVectorGetZ(Pos);
         }
         const auto& indexBuffer = Model.getIndexBuffer();
 
