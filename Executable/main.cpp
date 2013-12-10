@@ -146,7 +146,7 @@ public:
                                     break;
                                 }
                             }
-                            FbxVector4 norm = leNormal->GetDirectArray().GetAt(id);
+                            FbxVector4& norm = leNormal->GetDirectArray().GetAt(id);
                             vertexBuffer.emplace_back(
                                 XMVectorSet(data[0], data[1], data[2], 1.0f),
                                 XMVectorSet(norm[0], norm[1], norm[2], 0.0f),
@@ -194,11 +194,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         for (auto& vertex : vertexBuffer)
         {
             auto& Pos = vertex.Position;
+
+            // 정점 셰이더
             Pos = XMVector4Transform(Pos, XMMatrixLookAtRH(Eye, Focus, Up));
-            Pos = XMVector4Transform(Pos, XMMatrixPerspectiveFovRH(XM_PIDIV4, (float)width / (float)height, 0.1f, 100.0f));
+            Pos = XMVector4Transform(Pos, XMMatrixPerspectiveFovRH(XM_PIDIV4, (float)width / (float)height, 0.1f, 100.1f));
             Pos = XMVector4Transform(Pos, XMMatrixTranslation(1.0f, 1.0f, 0.0f));
             Pos = XMVector4Transform(Pos, XMMatrixScaling((float)width / 2.0f, (float)height / 2.0f, 1.0f));
-            Pos /= XMVectorGetZ(Pos);
+            Pos /= XMVectorGetW(Pos);
         }
         const auto& indexBuffer = Model.getIndexBuffer();
 
@@ -224,19 +226,22 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                     if (edge.TestY((float)y)) activeTable.emplace_back(edge, (float)y);
                 }
                 if (activeTable.empty()) continue;
-
                 // x값 순으로 정렬
-                sort(activeTable.rbegin(), activeTable.rend());
+                sort(activeTable.begin(), activeTable.end());
+
                 unordered_set<const Primitive*> openedPrimitives;
+                auto currentEdge = activeTable.cbegin();
                 for (size_t x = 0; x < width; ++x)
                 {
                     // 현재 점이 어느 도형 안에 포함되어있는지 체크
-                    while (!activeTable.empty() && !(x < activeTable.back().X))
+                    while (currentEdge != activeTable.cend() && !(x < currentEdge->X))
                     {
-                        auto result = openedPrimitives.find(activeTable.back().pParent);
-                        if (result == openedPrimitives.cend()) openedPrimitives.insert(activeTable.back().pParent);
-                        else openedPrimitives.erase(result);
-                        activeTable.pop_back();
+                        auto result = openedPrimitives.find(currentEdge->pParent);
+                        if (result == openedPrimitives.cend())
+                            openedPrimitives.insert(currentEdge->pParent);
+                        else
+                            openedPrimitives.erase(result);
+                        ++currentEdge;
                     }
 
                     // 0개 도형에 포함된경우 : skip
@@ -255,7 +260,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                         {
                             float z;
                             auto V = [&](size_t i){return vertexBuffer[pPrimitive->Indices[i]].Position; };
-                            Intersects(origin, direction, V(0), V(1), V(2), z);
+                            if (!Intersects(origin, direction, V(0), V(1), V(2), z))
+                                continue;
 
                             if (z < z0) z0 = z, surface = pPrimitive;
                         }
