@@ -20,5 +20,9 @@
 // Intel TBB
 #include <tbb/parallel_for.h>
 
+// FBX SDK
+#pragma comment(lib,"libfbxsdk.lib")
+#include <fbxsdk.h>
+
 // Easy D3D
 #include <EasyD3D/EasyD3D.h>

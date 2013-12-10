@@ -53,12 +53,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)EasyD3D\Inc;$(SolutionDir)Intel TBB\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)EasyD3D\Inc;$(SolutionDir)FBX\include;$(SolutionDir)Intel TBB\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Easy D3D;$(SolutionDir)Intel TBB\lib\ia32\vc11;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Intel TBB\lib\ia32\vc11;$(SolutionDir)FBX\lib\x86\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -71,14 +71,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)EasyD3D\Inc;$(SolutionDir)Intel TBB\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)EasyD3D\Inc;$(SolutionDir)FBX\include;$(SolutionDir)Intel TBB\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)Easy D3D;$(SolutionDir)Intel TBB\lib\ia32\vc11;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Intel TBB\lib\ia32\vc11;$(SolutionDir)FBX\lib\x86\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -98,6 +98,9 @@
     <ProjectReference Include="..\EasyD3D\EasyD3D.vcxproj">
       <Project>{c3b9849a-2b90-421f-b191-dd6c463b190a}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="box.fbx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

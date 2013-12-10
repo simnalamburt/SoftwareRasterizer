@@ -8,14 +8,16 @@ using namespace DirectX;
 using namespace DirectX::TriangleTests;
 using namespace EasyD3D;
 
-
-
 __declspec(align(16))
 struct Vertex
 {
     XMVECTOR Position;
     XMVECTOR Normal;
     XMVECTOR Color;
+
+    Vertex() = default;
+    Vertex(FXMVECTOR Position, FXMVECTOR Normal, FXMVECTOR Color)
+        : Position(Position), Normal(Normal), Color(Color) { }
 };
 
 struct Primitive
@@ -30,7 +32,7 @@ struct Primitive
 };
 
 __declspec(align(16))
-struct Camera
+struct Light
 {
     XMVECTOR Direction;
     XMVECTOR Color;
@@ -66,27 +68,93 @@ bool operator<(const ActiveEdge& Left, const ActiveEdge& Right) { return Left.X 
 
 
 
+struct FbxPtrDeleter
+{
+    void operator()(FbxObject* ptr) const
+    {
+        ptr->Destroy();
+    }
+};
+
+template <typename T>
+using FbxPtr = unique_ptr<T, FbxPtrDeleter>;
+
+
+class FbxLoader
+{
+    vector<Vertex, _aligned_allocator<Vertex>> vertexBuffer;
+    vector<Primitive> indexBuffer;
+
+public:
+    explicit FbxLoader(const char* FileName)
+    {
+        FbxManager* manager = FbxManager::Create();
+        RAII{ manager->Destroy(); };
+        FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
+        RAII{ ios->Destroy(true); };
+        manager->SetIOSettings(ios);
+
+        FbxImporter* importer = FbxImporter::Create(manager, "");
+        RAII{ importer->Destroy(true); };
+        FbxScene* scene = FbxScene::Create(manager, "");
+        RAII{ scene->Destroy(true); };
+
+        FALSE_ERROR(importer->Initialize(FileName, -1, manager->GetIOSettings()));
+        FALSE_ERROR(importer->Import(scene));
+
+        FbxNode* rootNode = scene->GetRootNode();
+        if (rootNode)
+        {
+            for (int i = 0; i < rootNode->GetChildCount(); i++)
+            {
+                FbxNode* childNode = rootNode->GetChild(i);
+
+                if (childNode->GetNodeAttribute() == NULL)
+                    continue;
+
+                FbxNodeAttribute::EType AttributeType = childNode->GetNodeAttribute()->GetAttributeType();
+
+                if (AttributeType != FbxNodeAttribute::eMesh)
+                    continue;
+
+                FbxMesh* mesh = (FbxMesh*)childNode->GetNodeAttribute();
+                FbxVector4* vertices = mesh->GetControlPoints();
+
+                int vertexCount = 0;
+                for (int j = 0; j < mesh->GetPolygonCount(); j++)
+                {
+                    assert(mesh->GetPolygonSize(j) == 3);
+                    for (int k = 0; k < 3; k++)
+                    {
+                        const double* data = vertices[mesh->GetPolygonVertex(j, k)].mData;
+                        vertexBuffer.emplace_back(
+                            XMVectorSet(data[0], data[1], data[2], data[3]),
+                            XMVectorReplicate(0),
+                            XMVectorReplicate(0));
+                    }
+                    indexBuffer.emplace_back(vertexCount, vertexCount + 1, vertexCount + 2);
+                    vertexCount += 3;
+                }
+            }
+        }
+    }
+
+    const decltype(vertexBuffer)& getVertexBuffer() const { return vertexBuffer; }
+    const decltype(indexBuffer)& getIndexBuffer() const { return indexBuffer; }
+};
+
+
+
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 {
     size_t width = 800, height = 600;
 
     // 모델 정보
-    vector<Vertex, _aligned_allocator<Vertex>> vertexBuffer =
-    {
-        { XMVectorSet(50, 150, 1, 1), XMVectorSet(0.173648f, 0, -0.984808f, 0), XMVectorSet(0.6f, 0.43f, 1, 0) },
-        { XMVectorSet(240, 440, 1, 1), XMVectorSet(0, 0, -1, 0), XMVectorSet(0.3f, 0.53f, 1, 0) },
-        { XMVectorSet(600, 275, 0, 1), XMVectorSet(-0.173648f, 0, -0.984808f, 0), XMVectorSet(0, 0.63f, 1, 0) },
-        { XMVectorSet(700, 125, 1, 1), XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 0.65f, 0.05f, 0) },
-        { XMVectorSet(660, 525, 1, 1), XMVectorSet(0, 0, -1, 0), XMVectorSet(1, 0.35f, 0.35f, 0) },
-        { XMVectorSet(275, 275, 0, 1), XMVectorSet(-0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 0.05f, 0.65f, 0) },
-    };
-    vector<Primitive> indexBuffer =
-    {
-        { 0, 1, 2 },
-        { 3, 4, 5 }
-    };
+    FbxLoader Model("box.fbx");
+    const auto& vertexBuffer = Model.getVertexBuffer();
+    const auto& indexBuffer = Model.getIndexBuffer();
 
-    Camera camera = { XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
+    Light light = { XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
 
     // 스크린 버퍼
     ScreenBuffer screenBuffer(width, height);
@@ -119,7 +187,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                 // AET 생성
                 vector<ActiveEdge> activeTable;
                 for (const auto& edge : edgeTable)
-                if (edge.TestY((float)y)) activeTable.emplace_back(edge, (float)y);
+                {
+                    if (edge.TestY((float)y)) activeTable.emplace_back(edge, (float)y);
+                }
                 if (activeTable.empty()) continue;
 
                 // x값 순으로 정렬
@@ -176,7 +246,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                     XMVECTOR Normal = XMVector3NormalizeEst(l0*N(0) + l1*N(1) + l2*N(2));
                     XMVECTOR Color = l0*C(0) + l1*C(1) + l2*C(2);
 
-                    Color = XMVector3Dot(Normal, camera.Direction)*Color*camera.Color;
+                    Color = XMVector3Dot(Normal, light.Direction)*Color*light.Color;
 
                     // 픽셀 셰이더
                     XMFLOAT3A color;
@@ -190,3 +260,5 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     });
     window.Run(nCmdShow);
 }
+
+
