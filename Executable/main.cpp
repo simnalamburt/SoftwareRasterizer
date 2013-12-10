@@ -14,6 +14,7 @@ __declspec(align(16))
 struct Vertex
 {
     XMVECTOR Position;
+    XMVECTOR Normal;
     XMVECTOR Color;
 };
 
@@ -26,6 +27,13 @@ struct Primitive
 
     Primitive() = default;
     Primitive(size_t A, size_t B, size_t C) : A(A), B(B), C(C) {}
+};
+
+__declspec(align(16))
+struct Camera
+{
+    XMVECTOR Direction;
+    XMVECTOR Color;
 };
 
 
@@ -65,18 +73,20 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     // ¸ðµ¨ Á¤º¸
     vector<Vertex, _aligned_allocator<Vertex>> vertexBuffer =
     {
-        { XMVectorSet(50, 150, 1, 1), XMVectorSet(0.6f, 0.43f, 1, 0) },
-        { XMVectorSet(240, 440, 1, 1), XMVectorSet(0.3f, 0.53f, 1, 0) },
-        { XMVectorSet(600, 275, 0, 1), XMVectorSet(0, 0.63f, 1, 0) },
-        { XMVectorSet(700, 125, 1, 1), XMVectorSet(1, 0.65f, 0.05f, 0) },
-        { XMVectorSet(660, 525, 1, 1), XMVectorSet(1, 0.35f, 0.35f, 0) },
-        { XMVectorSet(275, 275, 0, 1), XMVectorSet(1, 0.05f, 0.65f, 0) },
+        { XMVectorSet(50, 150, 1, 1), XMVectorSet(0.173648f, 0, -0.984808f, 0), XMVectorSet(0.6f, 0.43f, 1, 0) },
+        { XMVectorSet(240, 440, 1, 1), XMVectorSet(0, 0, -1, 0), XMVectorSet(0.3f, 0.53f, 1, 0) },
+        { XMVectorSet(600, 275, 0, 1), XMVectorSet(-0.173648f, 0, -0.984808f, 0), XMVectorSet(0, 0.63f, 1, 0) },
+        { XMVectorSet(700, 125, 1, 1), XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 0.65f, 0.05f, 0) },
+        { XMVectorSet(660, 525, 1, 1), XMVectorSet(0, 0, -1, 0), XMVectorSet(1, 0.35f, 0.35f, 0) },
+        { XMVectorSet(275, 275, 0, 1), XMVectorSet(-0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 0.05f, 0.65f, 0) },
     };
     vector<Primitive> indexBuffer =
     {
         { 0, 1, 2 },
         { 3, 4, 5 }
     };
+
+    Camera camera = { XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
 
     // ½ºÅ©¸° ¹öÆÛ
     ScreenBuffer screenBuffer(width, height);
@@ -161,8 +171,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                         l2 = XMVector2Cross(A - B, B - origin) / ABC;
                     }
 
+                    auto N = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Normal; };
                     auto C = [&](size_t i){ return vertexBuffer[surface->Indices[i]].Color; };
+                    XMVECTOR Normal = XMVector3NormalizeEst(l0*N(0) + l1*N(1) + l2*N(2));
                     XMVECTOR Color = l0*C(0) + l1*C(1) + l2*C(2);
+
+                    Color = XMVector3Dot(Normal, camera.Direction)*Color*camera.Color;
 
                     // ÇÈ¼¿ ¼ÎÀÌ´õ
                     XMFLOAT3A color;
