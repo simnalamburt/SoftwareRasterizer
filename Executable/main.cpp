@@ -128,10 +128,30 @@ public:
                     for (int k = 0; k < 3; k++)
                     {
                         const double* data = vertices[mesh->GetPolygonVertex(j, k)].mData;
-                        vertexBuffer.emplace_back(
-                            XMVectorSet(data[0], data[1], data[2], 1),
-                            XMVectorReplicate(0),
-                            XMVectorReplicate(0));
+                        for (int l = 0; l < mesh->GetElementNormalCount(); l++)
+                        {
+                            FbxLayerElementNormal* leNormal = mesh->GetElementNormal(l);
+                            int id = 0;
+                            if (leNormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+                            {
+                                switch (leNormal->GetReferenceMode())
+                                {
+                                case FbxGeometryElement::eDirect:
+                                    id = vertexCount + k;
+                                    break;
+                                case FbxGeometryElement::eIndexToDirect:
+                                    id = leNormal->GetIndexArray().GetAt(vertexCount + k);
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
+                            FbxVector4 norm = leNormal->GetDirectArray().GetAt(id);
+                            vertexBuffer.emplace_back(
+                                XMVectorSet(data[0], data[1], data[2], 1.0f),
+                                XMVectorSet(norm[0], norm[1], norm[2], 0.0f),
+                                XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f));
+                        }
                     }
                     indexBuffer.emplace_back(vertexCount, vertexCount + 1, vertexCount + 2);
                     vertexCount += 3;
@@ -259,12 +279,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                     XMVECTOR Normal = XMVector3NormalizeEst(l0*N(0) + l1*N(1) + l2*N(2));
                     XMVECTOR Color = l0*C(0) + l1*C(1) + l2*C(2);
 
-                    Color = XMVector3Dot(Normal, light.Direction)*Color*light.Color;
-
                     // «»ºø ºŒ¿Ã¥ı
-                    XMFLOAT3A color;
-                    XMStoreFloat3A(&color, Color);
-                    screenBuffer(x, y) = (uint(255 * color.x) & 0xFF) << 16 | (uint(255 * color.y) & 0xFF) << 8 | (uint(255 * color.z) & 0xFF);
+                    XMVECTOR Result = XMVector3Dot(Normal, -light.Direction)*Color*light.Color;
+
+                    XMFLOAT3A result;
+                    XMStoreFloat3A(&result, Result);
+                    screenBuffer(x, y) = (uint(255 * result.x) & 0xFF) << 16 | (uint(255 * result.y) & 0xFF) << 8 | (uint(255 * result.z) & 0xFF);
                 }
             }
         });
