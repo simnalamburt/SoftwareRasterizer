@@ -172,7 +172,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
     // 모델, 광원 정보
     FbxLoader Model("box.fbx");
-    Light light = { XMVectorSet(0.707107f, 0, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
+    Light light = { XMVectorSet(0, -0.707107f, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
     // 스크린 버퍼
     ScreenBuffer screenBuffer(width, height);
 
