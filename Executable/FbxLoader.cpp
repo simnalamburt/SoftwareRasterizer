@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "FbxLoader.h"
 
+using namespace DirectX;
+
+
 
 FbxLoader::FbxLoader(const char* FileName)
 {

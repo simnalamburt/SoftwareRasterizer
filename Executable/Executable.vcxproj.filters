@@ -7,6 +7,9 @@
     <Filter Include="ScreenBuffer">
       <UniqueIdentifier>{a99be962-7db0-414c-bbbd-e5a4f3d6c5c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FbxLoader">
+      <UniqueIdentifier>{10757507-1d3d-46b5-a1ae-3b1e8ff2c407}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -16,6 +19,9 @@
       <Filter>ScreenBuffer</Filter>
     </ClInclude>
     <ClInclude Include="AlignedAllocator.h" />
+    <ClInclude Include="FbxLoader.h">
+      <Filter>FbxLoader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -24,6 +30,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ScreenBuffer.cpp">
       <Filter>ScreenBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="FbxLoader.cpp">
+      <Filter>FbxLoader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
