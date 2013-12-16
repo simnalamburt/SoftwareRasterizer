@@ -90,9 +90,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
 
         // πˆ∆€ πﬁæ∆ø»
         auto vertexBuffer = VertexBuffer;
-        XMVECTORF32 Eye = { 10, 10, -25, 1 };
+        XMVECTORF32 Eye = { 1500, 4000, 250, 1 };
         XMVECTORF32 Focus = { 0, 0, 0, 1 };
-        XMVECTORF32 Up = { 0, 1, 0, 0 };
+        XMVECTORF32 Up = { 0, 0, 1, 0 };
         for (auto& vertex : vertexBuffer)
         {
             auto& Pos = vertex.Position;
@@ -188,7 +188,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
                     XMVECTOR Color = l0*C(0) + l1*C(1) + l2*C(2);
 
                     // «»ºø ºŒ¿Ã¥ı
-                    XMVECTOR Result = XMVector3Dot(Normal, -light.Direction)*Color*light.Color;
+                    XMVECTOR Dot = XMVector3Dot(Normal, -light.Direction);
+                    XMVECTOR Result = XMVectorClamp(Dot, XMVectorReplicate(0), XMVectorReplicate(1))*Color*light.Color;
 
                     XMFLOAT3A result;
                     XMStoreFloat3A(&result, Result);
