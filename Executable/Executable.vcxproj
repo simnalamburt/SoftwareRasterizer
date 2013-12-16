@@ -84,25 +84,30 @@
   <ItemGroup>
     <ClInclude Include="AlignedAllocator.h" />
     <ClInclude Include="FbxLoader.h" />
+    <ClInclude Include="list.h" />
+    <ClInclude Include="objLoader.h" />
+    <ClInclude Include="obj_parser.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ScreenBuffer.h" />
+    <ClInclude Include="string_extra.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FbxLoader.cpp" />
+    <ClCompile Include="list.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="objLoader.cpp" />
+    <ClCompile Include="obj_parser.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ScreenBuffer.cpp" />
+    <ClCompile Include="string_extra.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EasyD3D\EasyD3D.vcxproj">
       <Project>{c3b9849a-2b90-421f-b191-dd6c463b190a}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="box.fbx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

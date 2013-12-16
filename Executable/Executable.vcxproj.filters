@@ -10,6 +10,9 @@
     <Filter Include="FbxLoader">
       <UniqueIdentifier>{10757507-1d3d-46b5-a1ae-3b1e8ff2c407}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ObjLoader">
+      <UniqueIdentifier>{0bec156b-7024-4b2f-826f-f5986f1521d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -21,6 +24,18 @@
     <ClInclude Include="AlignedAllocator.h" />
     <ClInclude Include="FbxLoader.h">
       <Filter>FbxLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="list.h">
+      <Filter>ObjLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_parser.h">
+      <Filter>ObjLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="objLoader.h">
+      <Filter>ObjLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="string_extra.h">
+      <Filter>ObjLoader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -34,8 +49,17 @@
     <ClCompile Include="FbxLoader.cpp">
       <Filter>FbxLoader</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="box.fbx" />
+    <ClCompile Include="list.cpp">
+      <Filter>ObjLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="obj_parser.cpp">
+      <Filter>ObjLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="objLoader.cpp">
+      <Filter>ObjLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="string_extra.cpp">
+      <Filter>ObjLoader</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

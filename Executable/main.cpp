@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ScreenBuffer.h"
 #include "FbxLoader.h"
+#include "objLoader.h"
 
 using namespace std;
 using namespace tbb;
@@ -50,7 +51,29 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
     size_t width = 800, height = 600;
 
     // 모델, 광원 정보
-    FbxLoader Model("box.fbx");
+    std::vector<Vertex, _aligned_allocator<Vertex>> VertexBuffer;
+    std::vector<Primitive> IndexBuffer;
+    size_t VertexCount = 0;
+
+    objLoader Loader;
+    Loader.load("A380.obj");
+    for (size_t i = 0; i < Loader.faceCount; ++i)
+    {
+        for (size_t dim = 0; dim < 3; ++dim)
+            VertexBuffer.emplace_back(
+            XMVectorSet(
+            Loader.vertexList[Loader.faceList[i]->vertex_index[dim]]->e[0],
+            Loader.vertexList[Loader.faceList[i]->vertex_index[dim]]->e[1],
+            Loader.vertexList[Loader.faceList[i]->vertex_index[dim]]->e[2], 1.0f),
+            XMVectorSet(
+            Loader.normalList[Loader.faceList[i]->normal_index[dim]]->e[0],
+            Loader.normalList[Loader.faceList[i]->normal_index[dim]]->e[1],
+            Loader.normalList[Loader.faceList[i]->normal_index[dim]]->e[2], 0.0f),
+            XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f));
+        IndexBuffer.emplace_back(VertexCount, VertexCount + 1, VertexCount + 2);
+        VertexCount += 3;
+    }
+
     Light light = { XMVectorSet(0, -0.707107f, -0.707107f, 0), XMVectorSet(1, 1, 1, 0) };
     // 스크린 버퍼
     ScreenBuffer screenBuffer(width, height);
@@ -66,7 +89,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
         screenBuffer.ClearBuffer();
 
         // 버퍼 받아옴
-        auto vertexBuffer = Model.getVertexBuffer();
+        auto vertexBuffer = VertexBuffer;
         XMVECTORF32 Eye = { 10, 10, -25, 1 };
         XMVECTORF32 Focus = { 0, 0, 0, 1 };
         XMVECTORF32 Up = { 0, 1, 0, 0 };
@@ -81,7 +104,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow)
             Pos = XMVector4Transform(Pos, XMMatrixScaling((float)width / 2.0f, (float)height / 2.0f, 1.0f));
             Pos /= XMVectorGetW(Pos);
         }
-        const auto& indexBuffer = Model.getIndexBuffer();
+        const auto& indexBuffer = IndexBuffer;
 
         // 에지 테이블 생성
         vector<Edge, _aligned_allocator<Edge>> edgeTable;
