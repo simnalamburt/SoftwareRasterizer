@@ -17,4 +17,4 @@ Multi-Threaded Software Rasterizer
             PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\debug
     * 릴리즈 빌드일때
     
-            PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;;$(SolutionDir)FBX\lib\x86\release
+            PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\release
