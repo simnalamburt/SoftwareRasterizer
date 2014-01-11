@@ -12,9 +12,5 @@ Multi-Threaded Software Rasterizer
  1. 'Executable' 프로젝트 설정 (ALT+F7)
  2. 'Coinfiguration Properties' -> 'Debugging' -> 'Environment' -> 우클릭 -> 'Edit'
  3. 다음 문장 추가
-    * 디버그 빌드일때
     
-            PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\debug
-    * 릴리즈 빌드일때
-    
-            PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\release
+        PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\$(Configuration)
