@@ -19,5 +19,5 @@ Multi-Threaded Software Rasterizer
 ###### Note
 The official remote repositories of this project is only the sites below:
 
-1. [hyeon.me](http://git.hyeon.me/simnalamburt/snucse-13-frontpage)
-1. [GitHub](https://github.com/simnalamburt/_13FrontPage)
+1. [hyeon.me](http://git.hyeon.me/simnalamburt/softwarerasterizer)
+1. [GitHub](https://github.com/simnalamburt/SoftwareRasterizer)
