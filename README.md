@@ -14,3 +14,10 @@ Multi-Threaded Software Rasterizer
  3. 다음 문장 추가
     
         PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\$(Configuration)
+
+---
+###### Note
+The official remote repositories of this project is only the sites below:
+
+1. [hyeon.me](http://git.hyeon.me/simnalamburt/snucse-13-frontpage)
+1. [GitHub](https://github.com/simnalamburt/_13FrontPage)
