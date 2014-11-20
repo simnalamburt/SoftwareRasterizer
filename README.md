@@ -16,13 +16,13 @@ SNU 4190.311A, 2013 Fall
 
 1.  **Executable** → *Right Click* → `Properties`
 
-1.  `Configuration:` → `All Configurations`
+    `Configuration:` → `All Configurations`
 
-1.  `Configuration Properties` → `Debugging`
+    `Configuration Properties` → `Debugging`
 
-1.  `Debugger to launch:` → `Local Windows Debugger`
+    `Debugger to launch:` → `Local Windows Debugger`
 
-1.  `Environment` → `˅` → `Edit`
+    `Environment` → `˅` → `<Edit...>`
 
 1.  Add a following line
 
