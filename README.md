@@ -7,21 +7,24 @@ SNU 4190.311A, 2013 Fall
 
 ### Members
 
-* 김지현
+* [Hyeon Kim](https://github.com/simnalamburt)
 * 이효원
 
 --------
 
-### 컴파일 하기 전 주의사항
+### Debug environment setting
 
-비주얼 스튜디오로 프로그램을 실행하였을때, Intel TBB dll 파일들을 찾지 못한다면
-아래의 절차를 수행하면 된다.
+1.  **Executable** → *Right Click* → `Properties`
 
-1.  **Executable** 프로젝트 설정 *(ALT+F7)*
+1.  `Configuration:` → `All Configurations`
 
-2.  `Coinfiguration Properties` → `Debugging` → `Environment` → *우클릭* → `Edit`
+1.  `Configuration Properties` → `Debugging`
 
-3.  다음 문장 추가
+1.  `Debugger to launch:` → `Local Windows Debugger`
+
+1.  `Environment` → `˅` → `Edit`
+
+1.  Add a following line
 
     ```
     PATH=%PATH%;$(SolutionDir)Intel TBB\bin\ia32\vc11;$(SolutionDir)FBX\lib\x86\$(Configuration)
