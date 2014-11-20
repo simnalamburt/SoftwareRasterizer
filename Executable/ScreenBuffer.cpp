@@ -6,9 +6,10 @@
 using namespace EasyD3D;
 
 ScreenBuffer::ScreenBuffer(size_t Width, size_t Height) :
-info{ { sizeof BITMAPINFOHEADER, Width, Height, 1, 32, BI_RGB } },
 buffer(new uint[Width*Height]), bufferStride(new uint*[Height])
 {
+    info.bmiHeader = { sizeof BITMAPINFOHEADER, Width, Height, 1, 32, BI_RGB }; // C2797 workaround
+
     for (size_t i = 0; i < Height; ++i) bufferStride[i] = &buffer[i*Width];
 }
 
