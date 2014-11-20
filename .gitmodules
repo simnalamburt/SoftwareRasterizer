@@ -1,3 +1,3 @@
 [submodule "EasyD3D"]
-	path = EasyD3D
-	url = http://git.hyeon.me/simnalamburt/easyd3d.git
+  path = EasyD3D
+  url = git://github.com/simnalamburt/EasyD3D.git
